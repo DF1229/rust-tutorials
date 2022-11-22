@@ -20,7 +20,12 @@ impl Config {
 }
 
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
-    let _contents = fs::read_to_string(config.file_path)?;
+    let contents = fs::read_to_string(config.file_path)?;
+
+    for line in search(&config.query, &contents) {
+        print!("{line}\n");
+    }
+
     Ok(())
 }
 
@@ -32,22 +37,38 @@ pub fn search<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
             results.push(line.trim());
         }
     }
-    
+
     results
 }
 
 #[cfg(test)]
-mod tests {
+mod query_tests {
     use super::*;
+
+    const CONTENTS: &str = "\
+        Rust:
+        safe, fast, productive.
+        Pick three.";
+
+    #[test]
+    fn no_result() {
+        let query = "largewordthatisnotinthecontent";
+
+        assert_eq!(Vec::<&str>::new(), search(query, CONTENTS));
+    }
 
     #[test]
     fn one_result() {
         let query = "duct";
-        let contents = "\
-            Rust:
-            safe, fast, productive.
-            Pick three.";
 
-        assert_eq!(vec!["safe, fast, productive."], search(query, contents));
+        assert_eq!(vec!["safe, fast, productive."], search(query, CONTENTS));
     }
+
+    #[test]
+    fn two_results() {
+        let query = "i";
+
+        assert_eq!(vec!["safe, fast, productive.", "Pick three."], search(query, CONTENTS));
+    }
+    
 }
